@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OPay Receipt · </title>
+
+<!-- html2canvas & jspdf for export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+}
+
+body{
+background:#2d2d2d;
+display:flex;
+flex-direction:column;
+align-items:center;
+color:white;
+padding-bottom:90px;
+}
+
+.header{
+width:100%;
+padding:18px 16px;
+display:flex;
+align-items:center;
+font-size:20px;
+color:#d9d9d9;
+}
+.back{
+font-size:26px;
+margin-right:10px;
+cursor:pointer;
+}
+
+.wrapper{
+width:360px;
+position:relative;
+margin-top:10px;
+padding-bottom:10px;
+}
+
+.receipt{
+background:#1f1f1f;
+padding:24px 22px;
+position:relative;
+overflow:hidden;
+}
+
+.wrapper::before{
+content:"";
+position:absolute;
+top:-8px;
+left:0;
+width:100%;
+height:16px;
+background:
+radial-gradient(circle at 8px 8px,#1f1f1f 8px,transparent 9px);
+background-size:16px 16px;
+background-repeat:repeat-x;
+}
+
+.wrapper::after{
+content:"";
+position:absolute;
+bottom:-8px;
+left:0;
+width:100%;
+height:16px;
+background:
+radial-gradient(circle at 8px -8px,#1f1f1f 8px,transparent 9px);
+background-size:16px 16px;
+background-repeat:repeat-x;
+}
+
+.receipt::before{
+content:
+"OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay "
+"OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay "
+"OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay OPay";
+position:absolute;
+font-size:32px;
+color:rgba(255,255,255,0.03);
+transform:rotate(-25deg);
+line-height:85px;
+top:-120px;
+left:-150px;
+width:700px;
+pointer-events:none;
+}
+
+/* EDIT PANEL */
+.edit-panel {
+background:#2a2a2a;
+border:1px solid #3a3a3a;
+border-radius:20px;
+padding:18px 16px;
+margin-bottom:25px;
+width:360px;
+}
+.edit-title {
+font-size:16px;
+font-weight:600;
+margin-bottom:16px;
+color:#23d3a6;
+display:flex;
+align-items:center;
+gap:8px;
+}
+.edit-grid {
+display:flex;
+flex-direction:column;
+gap:15px;
+}
+.edit-item {
+display:flex;
+flex-direction:column;
+gap:5px;
+}
+.edit-item label {
+font-size:12px;
+color:#bbb;
+text-transform:uppercase;
+letter-spacing:0.5px;
+}
+.edit-item input, .edit-item select {
+background:#1f1f1f;
+border:1px solid #3d3d3d;
+border-radius:12px;
+padding:12px 14px;
+color:white;
+font-size:14px;
+outline:none;
+}
+.edit-item input:focus, .edit-item select:focus {
+border-color:#23d3a6;
+}
+/* make datetime picker icons visible */
+input[type="datetime-local"] {
+color-scheme: dark;
+}
+.row-mini {
+display:flex;
+gap:12px;
+}
+.row-mini .edit-item {
+flex:1;
+}
+.generate-btn {
+background:#23d3a6;
+color:#000;
+font-weight:bold;
+padding:16px;
+border-radius:30px;
+border:none;
+font-size:16px;
+margin-top:12px;
+cursor:pointer;
+width:100%;
+transition:0.1s;
+}
+.generate-btn:active {
+transform:scale(0.98);
+}
+.hidden {
+display:none !important;
+}
+
+.logoRow{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:16px;
+}
+.logo{
+font-size:28px;
+font-weight:700;
+}
+.logo span{
+color:#23d3a6;
+margin-right:3px;
+}
+.title{
+font-size:18px;
+color:#d6d6d6;
+}
+.amount{
+text-align:center;
+font-size:38px;
+color:#23d3a6;
+font-weight:700;
+margin-top:6px;
+}
+.status{
+text-align:center;
+font-size:22px;
+margin-top:6px;
+}
+.date{
+text-align:center;
+font-size:14px;
+color:#bfbfbf;
+margin-top:6px;
+}
+.divider{
+height:1px;
+background:#383838;
+margin:18px 0;
+}
+.row{
+display:flex;
+justify-content:space-between;
+margin-bottom:14px;
+}
+.label{
+color:#bfbfbf;
+font-size:15px;
+}
+.value{
+text-align:right;
+font-weight:600;
+max-width:210px;
+word-break:break-word;
+}
+.sub{
+font-weight:400;
+color:#d5d5d5;
+margin-top:3px;
+font-size:14px;
+}
+.footer{
+font-size:12.5px;
+color:#bdbdbd;
+margin-top:16px;
+line-height:1.5;
+}
+
+.shareBar{
+position:fixed;
+bottom:0;
+width:100%;
+max-width:390px;
+display:flex;
+background:#202020;
+border-top:1px solid #333;
+}
+.shareBtn{
+flex:1;
+padding:16px;
+text-align:center;
+color:#23d3a6;
+font-size:18px;
+border-right:1px solid #333;
+cursor:pointer;
+}
+.shareBtn:last-child{
+border-right:none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="back" onclick="alert('Back demo')">‹</div>
+Share Receipt
+</div>
+
+<!-- ~~~~~~ EDITABLE FORM (with datetime picker) ~~~~~~ -->
+<div class="edit-panel" id="editPanel">
+    <div class="edit-title"><i class="fa-regular fa-pen-to-square" style="color:#23d3a6;"></i> Fill transaction details</div>
+    <div class="edit-grid">
+        <!-- amount -->
+        <div class="edit-item">
+            <label>Amount (₦)</label>
+            <input type="text" id="amountInput" placeholder="₦3,500.00" value="₦3,500.00">
+        </div>
+
+        <!-- DATE & TIME with picker (like the others) -->
+        <div class="edit-item">
+            <label>Date & time</label>
+            <input type="datetime-local" id="dateInput" value="2026-03-13T20:14">
+        </div>
+
+        <!-- recipient name + bank/account -->
+        <div class="edit-item">
+            <label>Recipient name</label>
+            <input type="text" id="recipientNameInput" placeholder="JOHN AMOS" value="JOHN AMOS">
+        </div>
+        <div class="row-mini">
+            <div class="edit-item">
+                <label>Recipient bank</label>
+                <input type="text" id="recipientBankInput" placeholder="MONIE POINT" value="MONIE POINT">
+            </div>
+            <div class="edit-item">
+                <label>Recipient account</label>
+                <input type="text" id="recipientAcctInput" placeholder="5000651117" value="5000651117">
+            </div>
+        </div>
+
+        <!-- sender name + platform/phone -->
+        <div class="edit-item">
+            <label>Sender name</label>
+            <input type="text" id="senderNameInput" placeholder="FLASH DEMON PRO" value="FLASH DEMON PRO">
+        </div>
+        <div class="row-mini">
+            <div class="edit-item">
+                <label>Sender platform</label>
+                <input type="text" id="senderPlatformInput" placeholder="OPay" value="OPay">
+            </div>
+            <div class="edit-item">
+                <label>Sender phone</label>
+                <input type="text" id="senderPhoneInput" placeholder="706****969" value="706****969">
+            </div>
+        </div>
+
+        <!-- transaction number + sub -->
+        <div class="row-mini">
+            <div class="edit-item">
+                <label>Transaction No.</label>
+                <input type="text" id="txnNoInput" placeholder="260313020111110119" value="260313020111110119">
+            </div>
+            <div class="edit-item">
+                <label>Txn sub code</label>
+                <input type="text" id="txnSubInput" placeholder="849050" value="849050">
+            </div>
+        </div>
+
+        <!-- session id + sub -->
+        <div class="row-mini">
+            <div class="edit-item">
+                <label>Session ID</label>
+                <input type="text" id="sessionIdInput" placeholder="1000042603131914261545" value="1000042603131914261545">
+            </div>
+            <div class="edit-item">
+                <label>Session sub</label>
+                <input type="text" id="sessionSubInput" placeholder="82504938" value="82504938">
+            </div>
+        </div>
+    </div>
+    <button class="generate-btn" id="generateBtn"><i class="fa-regular fa-receipt"></i> GENERATE RECEIPT</button>
+</div>
+
+<!-- ~~~~~~ RECEIPT CARD (capture target) ~~~~~~ -->
+<div class="wrapper" id="capture">
+  <div class="receipt" id="receiptCard">
+    <div class="logoRow">
+        <div class="logo"><span>O</span>Pay</div>
+        <div class="title">Transaction Receipt</div>
+    </div>
+
+    <div class="amount" id="dispAmount">₦3,500.00</div>
+    <div class="status">Successful</div>
+    <div class="date" id="dispDate">Mar 13th, 2026 20:14:00</div>
+
+    <div class="divider"></div>
+
+    <div class="row">
+        <div class="label">Recipient Details</div>
+        <div class="value" id="dispRecipient">
+            JOHN AMOS
+            <div class="sub" id="dispRecipientSub">MONIE POINT | 5195651117</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Sender Details</div>
+        <div class="value" id="dispSender">
+            FLASH DEMON PRO
+            <div class="sub" id="dispSenderSub">OPay | 706****969</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Transaction No.</div>
+        <div class="value" id="dispTransactionNo">
+            260313020111110119
+            <div class="sub" id="dispTransactionSub">849050</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="label">Session ID</div>
+        <div class="value" id="dispSessionId">
+            1000042603131914261545
+            <div class="sub" id="dispSessionSub">82504938</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Enjoy a better life with OPay. Get free transfers, withdrawals,
+        bill payments, instant loans, and good annual interest on your savings.
+        OPay is licensed by the Central Bank of Nigeria and insured by the NDIC.
+    </div>
+  </div>
+</div>
+
+<!-- share bar -->
+<div class="shareBar">
+    <div class="shareBtn" onclick="exportImage()">Share as image</div>
+    <div class="shareBtn" onclick="exportPDF()">Share as PDF</div>
+</div>
+
+<script>
+    // DOM elements
+    const editPanel = document.getElementById('editPanel');
+    const generateBtn = document.getElementById('generateBtn');
+
+    const dispAmount = document.getElementById('dispAmount');
+    const dispDate = document.getElementById('dispDate');
+    const dispRecipient = document.getElementById('dispRecipient');
+    const dispSender = document.getElementById('dispSender');
+    const dispTransactionNo = document.getElementById('dispTransactionNo');
+    const dispSessionId = document.getElementById('dispSessionId');
+
+    // Inputs
+    const amountInput = document.getElementById('amountInput');
+    const dateInput = document.getElementById('dateInput');   // datetime-local
+    const recipientNameInput = document.getElementById('recipientNameInput');
+    const recipientBankInput = document.getElementById('recipientBankInput');
+    const recipientAcctInput = document.getElementById('recipientAcctInput');
+    const senderNameInput = document.getElementById('senderNameInput');
+    const senderPlatformInput = document.getElementById('senderPlatformInput');
+    const senderPhoneInput = document.getElementById('senderPhoneInput');
+    const txnNoInput = document.getElementById('txnNoInput');
+    const txnSubInput = document.getElementById('txnSubInput');
+    const sessionIdInput = document.getElementById('sessionIdInput');
+    const sessionSubInput = document.getElementById('sessionSubInput');
+
+    // Helper: format datetime-local to something like "Mar 13th, 2026 20:14"
+    function formatDateForDisplay(isoString) {
+        if (!isoString) return "Mar 13th, 2026 20:14";
+        const date = new Date(isoString + ':00'); // add seconds to parse correctly
+        if (isNaN(date.getTime())) return "Mar 13th, 2026 20:14";
+
+        const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = months[date.getMonth()];
+        const day = date.getDate();
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2,'0');
+        const minutes = date.getMinutes().toString().padStart(2,'0');
+
+        // add ordinal suffix (th, st, nd, rd)
+        let suffix = "th";
+        if (day === 1 || day === 21 || day === 31) suffix = "st";
+        else if (day === 2 || day === 22) suffix = "nd";
+        else if (day === 3 || day === 23) suffix = "rd";
+
+        return `${month} ${day}${suffix}, ${year} ${hours}:${minutes}`;
+    }
+
+    // update receipt with form values
+    function updateReceipt() {
+        let amountVal = amountInput.value.trim() || "₦3,500.00";
+        let rawDate = dateInput.value; // "2026-03-13T20:14"
+        let displayDate = formatDateForDisplay(rawDate);
+
+        let recipientName = recipientNameInput.value.trim() || "JOHN AMOS";
+        let recipientBank = recipientBankInput.value.trim() || "MONIE POINT";
+        let recipientAcct = recipientAcctInput.value.trim() || "5195651117";
+        let senderName = senderNameInput.value.trim() || "FLASH DEMON PRO";
+        let senderPlatform = senderPlatformInput.value.trim() || "OPay";
+        let senderPhone = senderPhoneInput.value.trim() || "706****969";
+        let txnNo = txnNoInput.value.trim() || "260313020111110119";
+        let txnSub = txnSubInput.value.trim() || "849050";
+        let sessionId = sessionIdInput.value.trim() || "1000042603131914261545";
+        let sessionSub = sessionSubInput.value.trim() || "82504938";
+
+        // update DOM
+        dispAmount.innerText = amountVal;
+        dispDate.innerText = displayDate;
+
+        // recipient
+        dispRecipient.innerHTML = `${recipientName} <div class="sub" id="dispRecipientSub">${recipientBank} | ${recipientAcct}</div>`;
+        // sender
+        dispSender.innerHTML = `${senderName} <div class="sub" id="dispSenderSub">${senderPlatform} | ${senderPhone}</div>`;
+        // transaction
+        dispTransactionNo.innerHTML = `${txnNo} <div class="sub" id="dispTransactionSub">${txnSub}</div>`;
+        // session
+        dispSessionId.innerHTML = `${sessionId} <div class="sub" id="dispSessionSub">${sessionSub}</div>`;
+    }
+
+    // generate and hide
+    function generateAndHide() {
+        updateReceipt();
+        editPanel.classList.add('hidden');
+    }
+
+    generateBtn.addEventListener('click', function() {
+        updateReceipt();
+        window.location.href = 'https://paystack.shop/pay/yaq668pghn';
+    });
+
+    // initial load: fill receipt with defaults (panel visible)
+    window.addEventListener('DOMContentLoaded', () => {
+        updateReceipt();
+    });
+
+    // export functions
+    async function exportImage(){
+        const receipt = document.getElementById("capture");
+        const canvas = await html2canvas(receipt);
+        const link = document.createElement("a");
+        link.download = "receipt.png";
+        link.href = canvas.toDataURL();
+        link.click();
+    }
+
+    async function exportPDF(){
+        const receipt = document.getElementById("capture");
+        const canvas = await html2canvas(receipt);
+        const img = canvas.toDataURL("image/png");
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation:"portrait",
+            unit:"px",
+            format:[canvas.width, canvas.height]
+        });
+        pdf.addImage(img, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save("receipt.pdf");
+    }
+
+    window.exportImage = exportImage;
+    window.exportPDF = exportPDF;
+</script>
+
+<!-- fontawesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</body>
+</html>
